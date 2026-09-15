@@ -1,4 +1,4 @@
-"""FastAPI 入口：两组 CIE L*a*b* 输入、严格校验、ΔE00 判定。"""
+"""FastAPI 入口：两组 CIE L*a*b* 输入、严格校验、ΔE00 判定；GS1 批次标签解析。"""
 
 from __future__ import annotations
 
@@ -11,6 +11,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from .ciede2000 import CIELab, ciede2000
+from .gs1 import Gs1ParseError, parse_gs1_label
 from .judge import judge
 
 app = FastAPI(
@@ -106,3 +107,35 @@ def delta_e(req: DeltaERequest) -> dict[str, Any]:
         "sample": {"L": req.sample.L, "a": req.sample.a, "b": req.sample.b},
         "result": verdict,
     }
+
+
+class Gs1LabelRequest(BaseModel):
+    """批次标签核验请求：扫码枪读出的原始文本（可读格式或 FNC1 扫描格式）。"""
+
+    model_config = ConfigDict(extra="forbid")
+
+    raw: str = Field(..., min_length=1, max_length=512, description="标签原始文本")
+
+
+@app.post("/api/gs1-label")
+def gs1_label(req: Gs1LabelRequest) -> Any:
+    """解析 GS1 批次标签，返回统一批次信息（商品编码/批号/失效日期）。
+
+    解析失败整次拒绝（422），并给出首个无法解析的字符位置 position（0 起），
+    供前端在保留的原文中高亮定位。本端点与 /api/delta-e 互不影响。
+    """
+    try:
+        parsed = parse_gs1_label(req.raw)
+    except Gs1ParseError as exc:
+        return JSONResponse(
+            status_code=422,
+            content={
+                "ok": False,
+                "message": f"标签解析失败：{exc.message}",
+                "errors": [
+                    {"field": "raw", "message": exc.message, "type": "parse_error"}
+                ],
+                "position": exc.position,
+            },
+        )
+    return {"ok": True, **parsed}

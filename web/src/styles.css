@@ -211,3 +211,137 @@ button:disabled {
 .excess-note {
   color: #8f2020;
 }
+
+/* ── 批次标签核验区 ─────────────────────────────────────────────── */
+
+.divider {
+  border: none;
+  border-top: 1px solid #d7dde6;
+  margin: 36px 0 28px;
+}
+
+.label-panel h2 {
+  font-size: 20px;
+  margin: 0 0 8px;
+}
+
+.hint-block {
+  color: #5a6573;
+  font-size: 13px;
+  line-height: 1.7;
+  margin: 0 0 14px;
+}
+
+.hint-block code {
+  background: #eef1f6;
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin: 0 3px;
+  font-size: 12px;
+}
+
+.label-status-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.label-status {
+  display: inline-block;
+  padding: 3px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.label-status.status-idle {
+  background: #eef1f6;
+  color: #5a6573;
+}
+
+.label-status.status-recognized {
+  background: #ecf8f0;
+  color: #1d7a40;
+  border: 1px solid #36a55f;
+}
+
+.label-status.status-rejected {
+  background: #fdf0f0;
+  color: #b32626;
+  border: 1px solid #d24a4a;
+}
+
+.label-format {
+  color: #8390a2;
+  font-size: 12px;
+}
+
+.label-input textarea {
+  padding: 8px 10px;
+  border: 1px solid #b8c2d1;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: ui-monospace, "SF Mono", Consolas, monospace;
+  width: 100%;
+  resize: vertical;
+}
+
+.error-position {
+  margin-top: 6px;
+  font-weight: 600;
+}
+
+.raw-highlight {
+  background: #fff;
+  border: 1px solid #e0a4a4;
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin: 8px 0 0;
+  font-size: 13px;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.raw-highlight mark {
+  background: #ffd2d2;
+  color: #8f2020;
+  border: 1px solid #c02b2b;
+  border-radius: 3px;
+  padding: 0 2px;
+  font-weight: 700;
+}
+
+.label-result {
+  border: 2px solid #36a55f;
+  background: #ecf8f0;
+  border-radius: 12px;
+  padding: 14px 20px;
+}
+
+.label-result dl {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 0;
+}
+
+@media (max-width: 720px) {
+  .label-result dl {
+    grid-template-columns: 1fr;
+  }
+}
+
+.label-result dt {
+  color: #5a6573;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.label-result dd {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  word-break: break-all;
+}

@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { postDeltaE } from "./api";
+import { BatchLabelPanel } from "./BatchLabelPanel";
 import { ColorFieldSet } from "./ColorFieldSet";
 import { ResultPanel } from "./ResultPanel";
 import type {
@@ -168,6 +169,11 @@ export default function App() {
           尚无结论：请输入两组完整且合法的 L*a*b* 后点击“比较”。
         </p>
       )}
+
+      <hr className="divider" />
+
+      {/* 独立的批次标签核验区：与上方色差比对互不读写状态 */}
+      <BatchLabelPanel />
     </main>
   );
 }

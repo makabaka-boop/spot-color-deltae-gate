@@ -247,4 +247,61 @@ describe("App 联调（fetch 打桩为真实 FastAPI 契约）", () => {
     expect(screen.getByTestId("standard.L")).toHaveValue("");
     expect(screen.getByTestId("sample.b")).toHaveValue("");
   });
+
+  it("批次标签核验区独立：标签被拒绝不清除色差结论，色差区不读标签状态", async () => {
+    const user = userEvent.setup();
+    mockResponse(async (url: string) => {
+      if (url === "/api/gs1-label") {
+        return new Response(
+          JSON.stringify({
+            ok: false,
+            message: "标签解析失败：商品编码校验位错误",
+            errors: [{ field: "raw", message: "校验位错误", type: "parse_error" }],
+            position: 17,
+          }),
+          { status: 422, headers: { "Content-Type": "application/json" } },
+        );
+      }
+      return new Response(
+        JSON.stringify({
+          ok: true,
+          ...PASS_PAIR,
+          result: {
+            delta_e00: 1.2643671,
+            delta_e00_round: 1.26,
+            threshold: 2.0,
+            passed: true,
+            excess_raw: 0.0,
+            excess_round: 0.0,
+            relation: "<=",
+          },
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      );
+    });
+
+    render(<App />);
+    // 先得到色差放行结论
+    await fillPair(user, PASS_PAIR);
+    await user.click(screen.getByTestId("compare-button"));
+    expect(await screen.findByTestId("result-panel")).toBeInTheDocument();
+
+    // 标签核验失败：色差结论与表单必须原样保留
+    await user.type(
+      screen.getByTestId("label-raw"),
+      "(01)09506000134353(10)INK2407(17)280930",
+    );
+    await user.click(screen.getByTestId("label-verify"));
+    expect(await screen.findByTestId("label-error")).toBeInTheDocument();
+    expect(screen.getByTestId("label-status")).toHaveTextContent("已拒绝");
+    expect(screen.getByTestId("result-panel")).toBeInTheDocument();
+    expect(screen.getByTestId("verdict")).toHaveTextContent("放行");
+    expect(screen.getByTestId("standard.L")).toHaveValue(String(PASS_PAIR.standard.L));
+
+    // 标签区处于已拒绝状态时，色差比对仍可独立再次完成
+    await user.click(screen.getByTestId("compare-button"));
+    await waitFor(() =>
+      expect(screen.getByTestId("result-panel")).toBeInTheDocument(),
+    );
+  });
 });

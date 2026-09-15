@@ -44,6 +44,39 @@ export interface DeltaEErrorResponse {
   errors: FieldError[];
 }
 
+/* ── GS1 批次标签核验 ─────────────────────────────────────────────── */
+
+/** 统一批次信息：商品编码、批号、失效日期（ISO 日历日期）。 */
+export interface Gs1BatchInfo {
+  gtin: string;
+  lot: string;
+  expires: string;
+}
+
+export interface Gs1ParsedField {
+  ai: string;
+  label: string;
+  value: string;
+  position: number;
+}
+
+export type Gs1LabelFormat = "readable" | "scan";
+
+export interface Gs1LabelSuccessResponse {
+  ok: true;
+  format: Gs1LabelFormat;
+  fields: Gs1ParsedField[];
+  batch: Gs1BatchInfo;
+}
+
+export interface Gs1LabelErrorResponse {
+  ok: false;
+  message: string;
+  errors: FieldError[];
+  /** 首个无法解析的字符在原文中的下标（0 起）；无法定位时为 null */
+  position: number | null;
+}
+
 export const THRESHOLD = 2.0;
 export const EMPTY_FORM: LabForm = {
   standard: { L: "", a: "", b: "" },

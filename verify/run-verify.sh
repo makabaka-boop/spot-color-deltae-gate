@@ -1,22 +1,23 @@
 #!/usr/bin/env bash
 # 一次性验收：
-#   1) pytest：37 对公开参考色对（含 Sharma 2005 全部 34 对），误差 <= 0.0001
-#   2) Vitest：前端输入校验与旧结论清除（组件级，fetch 打桩）
-#   3) Playwright：浏览器 → nginx → FastAPI 真实联调 E2E
+#   1) pytest：37 对公开参考色对（含 Sharma 2005 全部 34 对），误差 <= 0.0001；
+#      色差端点校验；GS1 批次标签解析（两种格式、定长/变长、校验位、日历日期）
+#   2) Vitest：前端输入校验与旧结论清除；标签核验区状态机与错误定位（组件级，fetch 打桩）
+#   3) Playwright：浏览器 → nginx → FastAPI 真实联调 E2E（色差主流程 + 标签核验区）
 set -euo pipefail
 
 API_BASE_URL="${API_BASE_URL:-http://api:8000}"
 WEB_BASE_URL="${WEB_BASE_URL:-http://web:80}"
 WEB_RUN_DIR="${WEB_RUN_DIR:-/tmp/web-run}"
 
-echo "──────────────────── 1/3  pytest（CIEDE2000 参考色对 + 端点） ────────────────────"
+echo "──────────────────── 1/3  pytest（CIEDE2000 参考色对 + 端点 + GS1 标签解析） ────────────────────"
 (
   cd /workspace/api
   # api 目录只读挂载：禁用 pytest 缓存写入；镜像内只有 python3
   python3 -m pytest -p no:cacheprovider
 )
 
-echo "──────────────────── 2/3  Vitest（输入校验、旧结论清除） ────────────────────"
+echo "──────────────────── 2/3  Vitest（输入校验、旧结论清除、标签核验状态机） ────────────────────"
 (
   cd "$WEB_RUN_DIR"
   npm test -- --run
@@ -48,4 +49,4 @@ PY
 )
 
 echo ""
-echo "✅ 验收全部通过：参考色对、Vitest、真实联调 E2E。"
+echo "✅ 验收全部通过：参考色对、GS1 标签解析、Vitest、真实联调 E2E。"
