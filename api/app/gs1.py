@@ -36,6 +36,11 @@ _SYMBOLOGY_PREFIXES = ("]d2", "]C1", "]e0", "]Q3")
 # 扫码枪常见的回车后缀
 _TRAILING_NOISE = "\r\n\t "
 
+# GS1 数字字段只允许 ASCII 数字 0–9。
+# str.isdigit()/int() 会接受阿拉伯文数字（٠١٢…）、全角数字（０１２…）等
+# Unicode 数字，必须显式限定字符集，否则这类标签会被错误识别。
+_ASCII_DIGITS = frozenset("0123456789")
+
 
 class Gs1ParseError(ValueError):
     """标签解析失败；position 为首个无法解析的字符在原始输入中的下标（0 起）。"""
@@ -127,9 +132,9 @@ def _validate_value(spec: AiSpec, value: str, pos: int) -> None:
             )
     if spec.numeric:
         for k, ch in enumerate(value):
-            if not ch.isdigit():
+            if ch not in _ASCII_DIGITS:
                 raise Gs1ParseError(
-                    f"AI ({spec.ai}) {spec.label}应为纯数字，此处出现 {ch!r}",
+                    f"AI ({spec.ai}) {spec.label}应为纯数字（仅限 0-9），此处出现 {ch!r}",
                     pos + k,
                 )
 

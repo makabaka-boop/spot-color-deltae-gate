@@ -136,6 +136,73 @@ def test_numeric_field_with_letter_rejected_at_character() -> None:
     assert raw[body["position"]] == "A"
 
 
+# ── 非 ASCII 数字字符：定位该字符并拒绝 ─────────────────────────────────
+# Python 的 str.isdigit()/int() 接受阿拉伯文数字、全角数字等 Unicode 数字，
+# 但 GS1 数字字段仅允许 ASCII 0-9；这类字符必须被拒绝并给出位置。
+
+# 阿拉伯文数字、扩展阿拉伯文数字、全角数字、天城文数字、上标数字
+NON_ASCII_DIGITS = ["٢", "۳", "３", "३", "²"]
+
+
+def test_arabic_indic_digit_as_gtin_check_digit_rejected() -> None:
+    """校验位为阿拉伯文数字 ٢（数值恰等于正确校验位 2）也必须拒绝。"""
+    raw = "(01)0950600013435٢(10)INK2407(17)280930"
+    status, body = _post(raw)
+    assert status == 422
+    assert body["ok"] is False
+    assert "纯数字" in body["message"]
+    assert body["position"] == 17
+    assert raw[body["position"]] == "٢"
+
+
+def test_arabic_indic_digit_in_expiry_rejected() -> None:
+    raw = "(01)09506000134352(10)INK2407(17)28٠930"  # ٠ = 阿拉伯文数字 0
+    status, body = _post(raw)
+    assert status == 422
+    assert "纯数字" in body["message"]
+    assert body["position"] == 35  # 失效日期值下标 33 起，第 3 位
+    assert raw[body["position"]] == "٠"
+
+
+def test_non_ascii_digits_in_gtin_rejected_both_formats() -> None:
+    for ch in NON_ASCII_DIGITS:
+        raw = f"(01)0950600013435{ch}(10)INK2407(17)280930"
+        status, body = _post(raw)
+        assert status == 422, (ch, "readable")
+        assert body["position"] == 17, (ch, "readable")
+        assert raw[body["position"]] == ch
+
+        raw = f"010950600013435{ch}10INK2407\x1d17280930"
+        status, body = _post(raw)
+        assert status == 422, (ch, "scan")
+        assert body["position"] == 15, (ch, "scan")
+        assert raw[body["position"]] == ch
+
+
+def test_non_ascii_digits_in_expiry_rejected_both_formats() -> None:
+    for ch in NON_ASCII_DIGITS:
+        raw = f"(01)09506000134352(10)INK2407(17)2809{ch}0"
+        status, body = _post(raw)
+        assert status == 422, (ch, "readable")
+        assert body["position"] == 37, (ch, "readable")
+        assert raw[body["position"]] == ch
+
+        raw = f"010950600013435210INK2407\x1d172809{ch}0"
+        status, body = _post(raw)
+        assert status == 422, (ch, "scan")
+        assert body["position"] == 32, (ch, "scan")
+        assert raw[body["position"]] == ch
+
+
+def test_superscript_digit_rejected_as_parse_error_not_crash() -> None:
+    """上标 ² 的 isdigit() 为真但 int() 无法转换：必须是 422 而非 500。"""
+    status, body = _post("(01)0950600013435²(10)INK2407(17)280930")
+    assert status == 422
+    assert body["ok"] is False
+    assert "纯数字" in body["message"]
+    assert body["position"] == 17
+
+
 # ── 商品编码校验位 ───────────────────────────────────────────────────────
 
 def test_gtin_check_digit_failure_rejected_at_check_digit() -> None:

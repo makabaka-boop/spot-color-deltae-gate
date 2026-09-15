@@ -64,6 +64,21 @@ test("损坏标签重试：校验位错误被拒绝并定位，修正后识别�
   await expect(page.getByTestId("label-error")).toHaveCount(0);
 });
 
+test("商品编码含阿拉伯文数字字符：定位该字符并拒绝标签", async ({ page }) => {
+  // 校验位为阿拉伯文数字 ٢（U+0662，数值恰等于正确校验位 2）也必须拒绝
+  const arabicDigitLabel = "(01)0950600013435٢(10)INK2407(17)280930";
+  await page.getByTestId("label-raw").fill(arabicDigitLabel);
+  await page.getByTestId("label-verify").click();
+
+  await expect(page.getByTestId("label-status")).toHaveText("已拒绝");
+  await expect(page.getByTestId("label-error")).toContainText("纯数字");
+  await expect(page.getByTestId("label-error-position")).toContainText(
+    "第 18 个字符",
+  );
+  await expect(page.getByTestId("label-error-char")).toHaveText("٢");
+  await expect(page.getByTestId("label-raw")).toHaveValue(arabicDigitLabel);
+});
+
 test("色差主流程独立：标签被拒绝不影响已有结论，比对可再次完成", async ({ page }) => {
   // 先完成一次色差比对（放行）
   await page.getByTestId("standard.L").fill(String(PASS_PAIR.standard[0]));
