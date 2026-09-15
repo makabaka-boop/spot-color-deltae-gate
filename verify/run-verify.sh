@@ -12,8 +12,8 @@ WEB_RUN_DIR="${WEB_RUN_DIR:-/tmp/web-run}"
 echo "──────────────────── 1/3  pytest（CIEDE2000 参考色对 + 端点） ────────────────────"
 (
   cd /workspace/api
-  # api 目录只读挂载：禁用 pytest 缓存写入
-  python -m pytest -p no:cacheprovider
+  # api 目录只读挂载：禁用 pytest 缓存写入；镜像内只有 python3
+  python3 -m pytest -p no:cacheprovider
 )
 
 echo "──────────────────── 2/3  Vitest（输入校验、旧结论清除） ────────────────────"
@@ -24,7 +24,7 @@ echo "──────────────────── 2/3  Vitest�
 
 echo "──────────────────── 3/3  Playwright（web ↔ api 真实联调） ────────────────────"
 # compose healthcheck 已保证服务就绪，这里再做一次显式检查
-python - <<'PY'
+python3 - <<'PY'
 import os, sys, time, urllib.request
 api = os.environ["API_BASE_URL"]
 web = os.environ["WEB_BASE_URL"]

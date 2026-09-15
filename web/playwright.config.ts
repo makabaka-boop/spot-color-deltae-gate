@@ -15,6 +15,10 @@ export default defineConfig({
   use: {
     baseURL: process.env.WEB_BASE_URL ?? "http://localhost:8080",
     trace: "retain-on-failure",
+    // Docker（含验收容器）内以 root 运行时需要关闭沙箱
+    launchOptions: {
+      args: ["--no-sandbox", "--disable-dev-shm-usage"],
+    },
   },
   projects: [
     {
